@@ -1,0 +1,18 @@
+# scripts/cron.example
+# ── crontab：每个交易日 17:30 增量采集（周一至周五）──
+# 编辑: crontab -e ，把 PROJECT 改成本技能绝对路径
+# 30 17 * * 1-5 cd /PATH/TO/煤炭和焦炭交易数据采集技能 && /usr/bin/python3 run.py --mode daily >> logs/cron.log 2>&1
+
+# ── macOS launchd：~/Library/LaunchAgents/com.coal.collector.plist ──
+# <?xml version="1.0" encoding="UTF-8"?>
+# <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+# <plist version="1.0"><dict>
+#   <key>Label</key><string>com.coal.collector</string>
+#   <key>ProgramArguments</key>
+#     <array><string>/usr/bin/python3</string><string>run.py</string>
+#            <string>--mode</string><string>daily</string></array>
+#   <key>WorkingDirectory</key><string>/PATH/TO/煤炭和焦炭交易数据采集技能</string>
+#   <key>StartCalendarInterval</key>
+#     <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+# </dict></plist>
+# 加载: launchctl load ~/Library/LaunchAgents/com.coal.collector.plist
