@@ -29,17 +29,22 @@ class FuturesDailyCollector(BaseCollector):
         end = end or date.today().isoformat()
         total = 0
         for vname, v in config.VARIETIES.items():
+            symbol = v["main_symbol"]
+            s_date = start.replace("-", "")
+            e_date = end.replace("-", "")
             df = with_retry(lambda: ak.futures_main_sina(
-                symbol=v["main_symbol"],
-                start_date=start.replace("-", ""),
-                end_date=end.replace("-", "")))
+                symbol=symbol, start_date=s_date, end_date=e_date))
             if df is None or df.empty:
                 self.log.warning("%s 无日线数据", vname)
                 continue
             rows = []
             for _, r in df.iterrows():
                 d = r.to_dict()
-                trade_date = str(_pick(d, _COL["date"]))[:10]
+                raw_date = _pick(d, _COL["date"])
+                if raw_date is None:
+                    self.log.warning("%s 某行缺少日期，跳过", vname)
+                    continue
+                trade_date = str(raw_date)[:10]
                 rows.append({
                     "variety": vname, "contract": v["main_symbol"],
                     "trade_date": trade_date,
