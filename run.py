@@ -1,5 +1,6 @@
 # run.py
 import argparse
+import datetime
 import config
 from storage.sqlite_store import SqliteStore
 from collectors.futures_daily import FuturesDailyCollector
@@ -53,7 +54,7 @@ def main():
     args = p.parse_args()
     store = build_store()
     start = args.start if args.mode == "backfill" else \
-        __import__("datetime").date.today().isoformat()
+        datetime.date.today().isoformat()
     result = run_pipeline(store, args.mode, args.kind, start)
     store.close()
     print("采集完成:", result)

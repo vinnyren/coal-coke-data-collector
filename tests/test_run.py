@@ -19,6 +19,7 @@ def test_run_pipeline_aggregates_counts(tmp_path, monkeypatch):
                                              FakeCollector(store, 5)])
     result = run.run_pipeline(s, mode="daily", kind="all")
     assert sum(result.values()) == 8
+    assert len(result) == 2
 
 
 def test_build_store_creates_tables(tmp_path, monkeypatch):

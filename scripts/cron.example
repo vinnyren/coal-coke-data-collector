@@ -13,6 +13,13 @@
 #            <string>--mode</string><string>daily</string></array>
 #   <key>WorkingDirectory</key><string>/PATH/TO/煤炭和焦炭交易数据采集技能</string>
 #   <key>StartCalendarInterval</key>
-#     <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#     <!-- launchd 单条 dict 不支持 Weekday 范围，用 array 列出周一(1)至周五(5)五条，与 crontab 1-5 对应 -->
+#     <array>
+#       <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#       <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#       <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#       <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#       <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>30</integer></dict>
+#     </array>
 # </dict></plist>
 # 加载: launchctl load ~/Library/LaunchAgents/com.coal.collector.plist

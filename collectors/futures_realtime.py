@@ -1,3 +1,4 @@
+from datetime import datetime
 import akshare as ak
 import config
 from collectors.base import BaseCollector, with_retry
@@ -16,7 +17,6 @@ class FuturesRealtimeCollector(BaseCollector):
     name = "futures_realtime"
 
     def fetch(self, now=None):
-        from datetime import datetime
         captured = now or datetime.now().isoformat(timespec="seconds")
         symbols = ",".join(v["main_symbol"] for v in config.VARIETIES.values())
         df = with_retry(lambda: ak.futures_zh_spot(symbol=symbols, market="CF"))

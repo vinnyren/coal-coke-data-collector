@@ -1,3 +1,4 @@
+from datetime import date as _date
 import akshare as ak
 import config
 from collectors.base import BaseCollector, with_retry
@@ -18,7 +19,6 @@ class PositionRankCollector(BaseCollector):
     name = "position_rank"
 
     def fetch(self, date=None):
-        from datetime import date as _date
         d = (date or _date.today().isoformat()).replace("-", "")
         data = with_retry(lambda: ak.futures_dce_position_rank(date=d))
         if not data:

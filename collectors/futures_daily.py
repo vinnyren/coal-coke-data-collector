@@ -1,3 +1,4 @@
+from datetime import date
 import akshare as ak
 import config
 from collectors.base import BaseCollector, with_retry
@@ -25,7 +26,6 @@ class FuturesDailyCollector(BaseCollector):
     name = "futures_daily"
 
     def fetch(self, start="2015-01-01", end=None):
-        from datetime import date
         end = end or date.today().isoformat()
         total = 0
         for vname, v in config.VARIETIES.items():

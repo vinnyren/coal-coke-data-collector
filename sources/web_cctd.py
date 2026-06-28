@@ -30,6 +30,7 @@ class CctdIndexSource(BaseCollector):
         if html is None:
             try:
                 resp = with_retry(lambda: requests.get(CCTD_URL, timeout=15))
+                resp.raise_for_status()
                 resp.encoding = resp.apparent_encoding
                 html = resp.text
             except Exception as e:  # noqa: BLE001
