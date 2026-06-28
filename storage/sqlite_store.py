@@ -1,6 +1,15 @@
 import sqlite3
 from pathlib import Path
 
+VALID_TABLES = {
+    "futures_daily",
+    "futures_realtime",
+    "spot_basis",
+    "position_rank",
+    "inventory",
+    "index_price",
+}
+
 
 class SqliteStore:
     def __init__(self, db_path):
@@ -16,6 +25,8 @@ class SqliteStore:
     def upsert(self, table, rows, conflict_cols):
         if not rows:
             return 0
+        if table not in VALID_TABLES:
+            raise ValueError(f"Unknown table: {table!r}")
         cols = list(rows[0].keys())
         placeholders = ", ".join(["?"] * len(cols))
         col_list = ", ".join(cols)
