@@ -53,11 +53,13 @@ def parse_spot_table(html: str, trade_date: str) -> list:
 def _fetch_html(session: requests.Session) -> str:
     """抓取现货表页，自动通过 HW_CHECK 反爬挑战（拿到校验值后重放）。"""
     resp = session.get(PPI_URL, timeout=15, headers={"User-Agent": _UA})
+    resp.raise_for_status()
     resp.encoding = resp.apparent_encoding
     token = _extract_challenge_token(resp.text)
     if token:
         session.cookies.set("HW_CHECK", token, path="/")
         resp = session.get(PPI_URL, timeout=15, headers={"User-Agent": _UA})
+        resp.raise_for_status()
         resp.encoding = resp.apparent_encoding
     return resp.text
 

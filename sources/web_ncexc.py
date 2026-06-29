@@ -61,8 +61,8 @@ class NcexcSource(BaseCollector):
             for it in INDEX_TYPES:
                 index_type = it
                 try:
-                    resp = with_retry(lambda: requests.get(
-                        NCEXC_API, params={"indexType": index_type},
+                    resp = with_retry(lambda it=index_type: requests.get(
+                        NCEXC_API, params={"indexType": it},
                         headers=_HEADERS, timeout=15))
                     resp.raise_for_status()
                     data_rows.extend(resp.json().get("dataRows", []))
