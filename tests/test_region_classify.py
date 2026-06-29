@@ -29,3 +29,11 @@ def test_national_fallback():
 
 def test_no_variety_returns_none():
     assert classify("螺纹钢华东价格") is None
+
+
+def test_generic_coal_with_area_defaults_to_dongli():
+    assert classify("陕西煤炭坑口价") == ("动力煤", "产地", "陕西")
+
+
+def test_non_coal_non_variety_returns_none():
+    assert classify("螺纹钢华东价格") is None

@@ -19,12 +19,16 @@ def classify(name):
     """把价格名称归类为 (品种, 地区类型, 地区)；无品种命中返回 None。
 
     判定顺序：进口 → 港口 → 产地 → 消费地 → 全国(兜底)。
+    当名称包含"煤"但无特定品种关键词时，按动力煤兜底处理。
     """
     if not name:
         return None
     variety = _match_variety(name)
     if variety is None:
-        return None
+        if "煤" in name:
+            variety = "动力煤"   # 无焦煤/焦炭关键词的煤价，按动力煤兜底
+        else:
+            return None
 
     if any(kw in name for kw in config.IMPORT_KEYWORDS):
         hit = _first_hit(name, config.IMPORT_KEYWORDS)
