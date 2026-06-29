@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from collectors.base import BaseCollector, with_retry
+from sources.region_classify import classify
 
 CCTD_URL = "https://www.cctd.com.cn/index.php?m=content&c=index&a=lists&catid=520"
 SOURCE = "cctd"
@@ -40,4 +41,19 @@ class CctdIndexSource(BaseCollector):
         if not rows:
             self.log.warning("CCTD 未解析到指数行（页面结构可能已变）")
             return 0
-        return self.store.upsert("index_price", rows, ["index_name", "trade_date"])
+        n = self.store.upsert("index_price", rows, ["index_name", "trade_date"])
+        regional = []
+        for r in rows:
+            hit = classify(r["index_name"])
+            if hit is None:
+                continue
+            variety, region_type, region = hit
+            regional.append({
+                "variety": variety, "region_type": region_type,
+                "region": region, "trade_date": r["trade_date"],
+                "price": r["price"], "unit": None, "source": SOURCE,
+            })
+        n += self.store.upsert(
+            "spot_regional", regional,
+            ["variety", "region_type", "region", "trade_date", "source"])
+        return n
