@@ -47,3 +47,24 @@ CREATE TABLE IF NOT EXISTS index_price (
     price REAL, source TEXT,
     UNIQUE(index_name, trade_date)
 );
+
+CREATE TABLE IF NOT EXISTS spot_regional (
+    variety TEXT NOT NULL,
+    region_type TEXT NOT NULL,
+    region TEXT NOT NULL,
+    trade_date TEXT NOT NULL,
+    price REAL,
+    unit TEXT,
+    source TEXT NOT NULL,
+    UNIQUE(variety, region_type, region, trade_date, source)
+);
+
+CREATE TABLE IF NOT EXISTS spot_regional_stats (
+    variety TEXT NOT NULL,
+    region_type TEXT NOT NULL,
+    trade_date TEXT NOT NULL,
+    sample_count INTEGER,
+    avg_price REAL, min_price REAL, max_price REAL, spread REAL,
+    min_region TEXT, max_region TEXT,
+    UNIQUE(variety, region_type, trade_date)
+);

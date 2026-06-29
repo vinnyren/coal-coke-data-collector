@@ -8,6 +8,8 @@ VALID_TABLES = {
     "position_rank",
     "inventory",
     "index_price",
+    "spot_regional",
+    "spot_regional_stats",
 }
 
 
