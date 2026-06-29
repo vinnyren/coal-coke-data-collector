@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -29,3 +30,15 @@ PRODUCTION_AREAS = ["山西", "陕西", "内蒙古", "内蒙", "蒙西", "蒙东
 IMPORT_KEYWORDS = ["进口", "蒙煤", "澳煤", "俄煤", "甘其毛都", "满都拉"]
 CONSUMPTION_AREAS = ["唐山", "华北", "华东", "华中", "华南", "西南",
                      "钢厂", "焦化厂"]
+
+
+def resolve_db_path():
+    """DB 路径：环境变量 COAL_DB_PATH 优先，回退 DB_PATH。"""
+    env = os.environ.get("COAL_DB_PATH")
+    return Path(env) if env else DB_PATH
+
+
+def resolve_runs_dir():
+    """运行报告目录：环境变量 COAL_RUNS_DIR 优先，回退 <项目>/runs。"""
+    env = os.environ.get("COAL_RUNS_DIR")
+    return Path(env) if env else BASE_DIR / "runs"
