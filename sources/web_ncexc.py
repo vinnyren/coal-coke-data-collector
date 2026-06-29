@@ -1,40 +1,52 @@
-from datetime import date as _date
 import requests
-from bs4 import BeautifulSoup
 from collectors.base import BaseCollector, with_retry
-from sources.region_classify import classify
 
-NCEXC_URL = "https://www.ncexc.cn/"
+# 全国煤炭交易中心动力煤指数 JSON 接口（实测可用）。
+# indexType: 101=下水煤指数(港口), 102=下水煤中长期, 103=直达煤指数(产地),
+#            104=直达煤中长期, 105=中价指数。默认取 103(产地) + 101(港口/下水)。
+NCEXC_API = "https://www.ncexc.com/DzjyServer/api/getQuotationIndexPrice.json"
+INDEX_TYPES = ["103", "101"]
 SOURCE = "ncexc"
+_HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Referer": "https://www.ncexc.com/MTServer/index/thermalCoal?skipType=1",
+    "X-Requested-With": "XMLHttpRequest",
+}
 
 
-def parse_ncexc(html, trade_date):
-    """解析全国煤炭交易中心指数表：名称→classify 归类，价格 float 化。
+def _region_type_for(index_type_name: str) -> str:
+    """由指数类型名判定地区类型：直达煤→产地，下水煤→港口，其它→全国。"""
+    if "直达" in index_type_name:
+        return "产地"
+    if "下水" in index_type_name:
+        return "港口"
+    return "全国"
 
-    【选择器现状说明】
-    以下解析逻辑基于"假设的页面表格结构"（<table><tr><td>名称/价格），实测对当前真实页面
-    返回 0 行（页面结构与假设不同，实际页面可能为 JS 渲染或不同 HTML 结构）。
-    属 best-effort；选择器待按真实页面结构调整。
-    调整此 parse 函数即可，fetch 兜底已保证失败不影响其它源。
+
+def parse_ncexc(data_rows: list) -> list:
+    """解析 getQuotationIndexPrice.json 的 dataRows 为统一记录。
+
+    全部为动力煤指数；region 用完整 ZSZLX（如"陕西5500K"，区分同省不同热值），
+    region_type 由 INDEXTYPE 判定，price=ZS，trade_date=FBRQ。ZS/FBRQ 缺失则跳过。
     """
-    soup = BeautifulSoup(html, "html.parser")
     out = []
-    for tr in soup.find_all("tr"):
-        tds = [td.get_text(strip=True) for td in tr.find_all("td")]
-        if len(tds) < 2:
-            continue
-        name, price_str = tds[0], tds[1]
-        hit = classify(name)
-        if hit is None:
+    for d in data_rows:
+        zs = d.get("ZS")
+        zszlx = (d.get("ZSZLX") or "").strip()
+        fbrq = d.get("FBRQ")
+        if zs is None or not fbrq or not zszlx:
             continue
         try:
-            price = float(price_str.replace(",", ""))
+            price = float(str(zs).replace(",", ""))
         except ValueError:
             continue
-        variety, region_type, region = hit
         out.append({
-            "variety": variety, "region_type": region_type, "region": region,
-            "trade_date": trade_date, "price": price, "unit": None,
+            "variety": "动力煤",
+            "region_type": _region_type_for(d.get("INDEXTYPE") or ""),
+            "region": zszlx,
+            "trade_date": str(fbrq)[:10],
+            "price": price,
+            "unit": "元/吨",
             "source": SOURCE,
         })
     return out
@@ -43,20 +55,24 @@ def parse_ncexc(html, trade_date):
 class NcexcSource(BaseCollector):
     name = "web_ncexc"
 
-    def fetch(self, html=None, trade_date=None):
-        trade_date = trade_date or _date.today().isoformat()
-        if html is None:
-            try:
-                resp = with_retry(lambda: requests.get(NCEXC_URL, timeout=15))
-                resp.raise_for_status()
-                resp.encoding = resp.apparent_encoding
-                html = resp.text
-            except Exception as e:  # noqa: BLE001
-                self.log.warning("ncexc 页面抓取失败: %s", e)
-                return 0
-        rows = parse_ncexc(html, trade_date)
+    def fetch(self, data_rows=None):
+        if data_rows is None:
+            data_rows = []
+            for it in INDEX_TYPES:
+                index_type = it
+                try:
+                    resp = with_retry(lambda: requests.get(
+                        NCEXC_API, params={"indexType": index_type},
+                        headers=_HEADERS, timeout=15))
+                    resp.raise_for_status()
+                    data_rows.extend(resp.json().get("dataRows", []))
+                except Exception as e:  # noqa: BLE001
+                    self.log.warning("ncexc 接口 indexType=%s 抓取失败: %s",
+                                     index_type, e)
+                    continue
+        rows = parse_ncexc(data_rows)
         if not rows:
-            self.log.warning("ncexc 未解析到可分类指数行（页面结构可能已变）")
+            self.log.warning("ncexc 未解析到指数行（接口返回空或结构已变）")
             return 0
         return self.store.upsert(
             "spot_regional", rows,

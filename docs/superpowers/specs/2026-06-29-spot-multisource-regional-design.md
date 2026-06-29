@@ -60,19 +60,21 @@ classify(name: str) -> tuple[variety, region_type, region] | None
 
 统一记录结构：`{variety, region_type, region, trade_date, price, unit, source}`。每个源解析器为纯函数（fixture 单测）。
 
-**数据源状态（2026-06-29 更新）**：
-- `web_cctd`：已实测可用，可正常解析并写入 `index_price` 与 `spot_regional`。
-- `web_100ppi` / `web_ncexc`：⚠️ 已知：当前解析器对真实页面返回 0 行，选择器待按真实页面结构调整；CCTD 源已实测可用。失败时仅 WARN，不影响其它源。
+**数据源状态（2026-06-29 实测可用）**：三源均已联网实测写入真实数据。
+- `web_cctd`：解析公开指数页 → `index_price`（约 46 行原始）+ `spot_regional`（可分类约 13 行：产地/全国）。
+- `web_100ppi`：页面有 `HW_CHECK` JS 反爬挑战，采集器先抓挑战页取校验值、带 cookie 重放后解析现货表；当日价取数据行倒数第二列。实测写入焦炭/动力煤/焦煤全国价 3 行。
+- `web_ncexc`：改用真实 JSON 接口 `www.ncexc.com/DzjyServer/api/getQuotationIndexPrice.json?indexType=103|101`（直达煤=产地、下水煤=港口），`ZSZLX`=区域、`ZS`=指数值、`FBRQ`=日期；实测写入产地(陕西/山西/蒙西/蒙东)+港口约 17 行。
+- 任一源失败仅 WARN、返回 0，不影响其它源与统计。
 
 | 文件 | 来源 | 产出 |
 |---|---|---|
 | `sources/web_cctd.py`（改造） | CCTD（已接入） | 原始行→`index_price`（保留）；可分类行→`spot_regional`（source="cctd"） |
-| `sources/web_ncexc.py`（新） | 全国煤炭交易中心 ncexc.cn 公开指数页 | `spot_regional`（source="ncexc"） |
-| `sources/web_100ppi.py`（新） | 生意社现货表全国价 | `spot_regional`（region="全国", region_type="全国", source="100ppi"） |
+| `sources/web_ncexc.py`（新） | 全国煤炭交易中心 JSON 接口 `getQuotationIndexPrice.json` | `spot_regional`（source="ncexc"） |
+| `sources/web_100ppi.py`（新） | 生意社现货表全国价（过 HW_CHECK 反爬） | `spot_regional`（region="全国", region_type="全国", source="100ppi"） |
 
 - `web_cctd.fetch` 改造：解析得到原始行后，写 `index_price`（同今），再对每行调用 `classify`，命中者组装并 upsert `spot_regional`。两步互不影响，任一为空仅 WARN。
-- `web_100ppi`：解析现货表中焦炭/动力煤/炼焦煤的全国价，region_type/region 固定为"全国"。
-- `web_ncexc`：解析公开价格指数页的分区域指数；结构未知部分用防御解析，解析为 0 行时 WARN。
+- `web_100ppi`：先过 `HW_CHECK` JS 反爬挑战（取校验值带 cookie 重放），解析现货表中焦炭/动力煤/炼焦煤的全国价（当日价取数据行倒数第二列），region_type/region 固定"全国"。
+- `web_ncexc`：直接调用 JSON 接口（indexType 103 直达煤=产地、101 下水煤=港口），按 `ZSZLX/ZS/FBRQ` 组装；region 保留完整 `ZSZLX` 以区分同省不同热值。
 
 ## 5. 统计步骤
 
