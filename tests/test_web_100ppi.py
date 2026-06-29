@@ -25,6 +25,7 @@ def test_parse_keeps_only_coal_varieties():
     for r in rows:
         assert r["region_type"] == "全国" and r["region"] == "全国"
         assert r["source"] == "100ppi"
+        assert r["unit"] == "元/吨"
 
 
 def test_parse_uses_current_price_column():

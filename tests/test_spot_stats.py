@@ -50,6 +50,24 @@ def test_all_rollup_across_region_types(tmp_path):
     assert allrow["spread"] == 300.0
 
 
+def test_fetch_date_none_covers_all_dates(tmp_path):
+    """date=None 时应对库中所有 distinct trade_date 计算 stats。"""
+    s = make_store(tmp_path)
+    seed(s, [
+        {"variety": "动力煤", "region_type": "港口", "region": "秦皇岛",
+         "trade_date": "2023-01-03", "price": 900, "unit": None, "source": "cctd"},
+        {"variety": "动力煤", "region_type": "港口", "region": "日照",
+         "trade_date": "2023-01-04", "price": 850, "unit": None, "source": "cctd"},
+    ])
+    SpotStatsCollector(s).fetch()   # date=None
+    dates_in_stats = {
+        r["trade_date"]
+        for r in s.query("SELECT trade_date FROM spot_regional_stats WHERE variety='动力煤'")
+    }
+    assert "2023-01-03" in dates_in_stats
+    assert "2023-01-04" in dates_in_stats
+
+
 def test_idempotent_and_skips_null_price(tmp_path):
     s = make_store(tmp_path)
     seed(s, [

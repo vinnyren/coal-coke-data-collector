@@ -22,7 +22,7 @@ python run.py --mode backfill --start 2015-01-01
 # 每日增量（只补最新交易日）
 python run.py --mode daily
 
-# 只更某一类: futures | spot | rank | inventory | regional | all
+# 只更某一类: all | futures | spot | rank | inventory | regional
 python run.py --mode daily --kind futures
 
 # 只更现货多地与统计（生意社/CCTD/全国煤炭交易中心 + 跨地区统计）

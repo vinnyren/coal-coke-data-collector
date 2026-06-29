@@ -9,7 +9,14 @@ SOURCE = "ncexc"
 
 
 def parse_ncexc(html, trade_date):
-    """解析全国煤炭交易中心指数表：名称→classify 归类，价格 float 化。"""
+    """解析全国煤炭交易中心指数表：名称→classify 归类，价格 float 化。
+
+    【选择器现状说明】
+    以下解析逻辑基于"假设的页面表格结构"（<table><tr><td>名称/价格），实测对当前真实页面
+    返回 0 行（页面结构与假设不同，实际页面可能为 JS 渲染或不同 HTML 结构）。
+    属 best-effort；选择器待按真实页面结构调整。
+    调整此 parse 函数即可，fetch 兜底已保证失败不影响其它源。
+    """
     soup = BeautifulSoup(html, "html.parser")
     out = []
     for tr in soup.find_all("tr"):

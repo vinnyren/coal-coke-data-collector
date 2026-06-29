@@ -58,7 +58,11 @@ classify(name: str) -> tuple[variety, region_type, region] | None
 
 ## 4. 数据源（可插拔，best-effort，失败仅 WARN 返回 0）
 
-统一记录结构：`{variety, region_type, region, trade_date, price, unit, source}`。每个源解析器为纯函数（fixture 单测）；真实页面选择器首次联网运行后核对（沿用现有 CCTD 模式）。
+统一记录结构：`{variety, region_type, region, trade_date, price, unit, source}`。每个源解析器为纯函数（fixture 单测）。
+
+**数据源状态（2026-06-29 更新）**：
+- `web_cctd`：已实测可用，可正常解析并写入 `index_price` 与 `spot_regional`。
+- `web_100ppi` / `web_ncexc`：⚠️ 已知：当前解析器对真实页面返回 0 行，选择器待按真实页面结构调整；CCTD 源已实测可用。失败时仅 WARN，不影响其它源。
 
 | 文件 | 来源 | 产出 |
 |---|---|---|
