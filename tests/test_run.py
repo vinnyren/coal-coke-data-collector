@@ -36,7 +36,8 @@ def test_regional_kind_order_and_membership(tmp_path):
     s = SqliteStore(str(tmp_path / "t.db"))
     s.init_schema(config.SCHEMA_PATH)
     names = [c.name for c in run._collectors_for_kind(s, "regional")]
-    assert names == ["web_100ppi", "web_cctd", "web_ncexc", "spot_stats"]
+    assert names == ["web_100ppi", "web_cctd", "web_ncexc", "web_ctctc",
+                     "spot_stats"]
 
 
 def test_all_includes_regional_not_index(tmp_path):
