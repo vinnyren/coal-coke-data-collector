@@ -40,14 +40,13 @@ def _collectors_for_kind(store, kind):
 
 
 def run_pipeline(store, mode, kind="all", start="2015-01-01"):
-    result = {}
-    for i, c in enumerate(_collectors_for_kind(store, kind)):
-        key = c.name if c.name not in result else f"{c.name}_{i}"
+    results = []
+    for c in _collectors_for_kind(store, kind):
         if c.name == "futures_daily":
-            result[key] = c.run(start=start)
+            results.append(c.run(start=start))
         else:
-            result[key] = c.run()
-    return result
+            results.append(c.run())
+    return results
 
 
 def main():

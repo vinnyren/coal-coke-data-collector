@@ -4,22 +4,24 @@ import config
 from storage.sqlite_store import SqliteStore
 
 
-class FakeCollector:
-    def __init__(self, store, n):
-        self.store = store; self.n = n; self.name = "fake"
-    def run(self, **kwargs):
-        return self.n
-
-
-def test_run_pipeline_aggregates_counts(tmp_path, monkeypatch):
+def test_run_pipeline_returns_runresults(tmp_path, monkeypatch):
     s = SqliteStore(str(tmp_path / "t.db"))
     s.init_schema(config.SCHEMA_PATH)
+
+    class FakeCollector:
+        def __init__(self, name, rows):
+            self.name = name
+            self._rows = rows
+        def run(self, **kwargs):
+            return {"name": self.name, "status": "ok", "rows": self._rows,
+                    "error": None, "duration_ms": 1}
+
     monkeypatch.setattr(run, "_collectors_for_kind",
-                        lambda store, kind: [FakeCollector(store, 3),
-                                             FakeCollector(store, 5)])
-    result = run.run_pipeline(s, mode="daily", kind="all")
-    assert sum(result.values()) == 8
-    assert len(result) == 2
+                        lambda store, kind: [FakeCollector("a", 3),
+                                             FakeCollector("b", 5)])
+    results = run.run_pipeline(s, mode="daily", kind="all")
+    assert [r["name"] for r in results] == ["a", "b"]
+    assert sum(r["rows"] for r in results) == 8
 
 
 def test_build_store_creates_tables(tmp_path, monkeypatch):
