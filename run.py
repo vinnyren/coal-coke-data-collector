@@ -11,6 +11,7 @@ from collectors.inventory import InventoryCollector
 from sources.web_cctd import CctdIndexSource
 from sources.web_100ppi import Ppi100Source
 from sources.web_ncexc import NcexcSource
+from sources.web_ctctc import CtctcSource
 from collectors.spot_stats import SpotStatsCollector
 
 
@@ -27,7 +28,8 @@ def _collectors_for_kind(store, kind):
         "rank": [PositionRankCollector(store)],
         "inventory": [InventoryCollector(store)],
         "regional": [Ppi100Source(store), CctdIndexSource(store),
-                     NcexcSource(store), SpotStatsCollector(store)],
+                     NcexcSource(store), CtctcSource(store),
+                     SpotStatsCollector(store)],
     }
     if kind == "all":
         out = []

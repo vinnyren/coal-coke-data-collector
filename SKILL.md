@@ -25,7 +25,7 @@ python run.py --mode daily
 # 只更某一类: all | futures | spot | rank | inventory | regional
 python run.py --mode daily --kind futures
 
-# 只更现货多地与统计（生意社/CCTD/全国煤炭交易中心 + 跨地区统计）
+# 只更现货多地与统计（生意社/CCTD/全国煤炭交易中心/中国太原煤炭价格指数 + 跨地区统计）
 python run.py --mode daily --kind regional
 ```
 
@@ -38,7 +38,7 @@ spot_regional（分地区现货/指数价）/ spot_regional_stats（跨地区统
 ## 数据来源
 
 - 主通道：AKShare（聚合新浪/东财/交易所，合法零成本）。
-- 补充：CCTD 等公开免登录指数页面（sources/，失败不影响主数据）。
+- 补充（sources/，可插拔，失败不影响主数据）：CCTD 指数页、生意社全国价、全国煤炭交易中心 JSON 接口、中国太原煤炭价格指数 JSON 接口（ctctc，含 2023 至今周度历史）。
 
 ## 定时
 
