@@ -9,6 +9,9 @@ from collectors.spot_basis import SpotBasisCollector
 from collectors.position_rank import PositionRankCollector
 from collectors.inventory import InventoryCollector
 from sources.web_cctd import CctdIndexSource
+from sources.web_100ppi import Ppi100Source
+from sources.web_ncexc import NcexcSource
+from collectors.spot_stats import SpotStatsCollector
 
 
 def build_store():
@@ -23,7 +26,8 @@ def _collectors_for_kind(store, kind):
         "spot": [SpotBasisCollector(store)],
         "rank": [PositionRankCollector(store)],
         "inventory": [InventoryCollector(store)],
-        "index": [CctdIndexSource(store)],
+        "regional": [Ppi100Source(store), CctdIndexSource(store),
+                     NcexcSource(store), SpotStatsCollector(store)],
     }
     if kind == "all":
         out = []
@@ -48,7 +52,8 @@ def main():
     p = argparse.ArgumentParser(description="煤焦交易数据采集")
     p.add_argument("--mode", choices=["backfill", "daily"], default="daily")
     p.add_argument("--kind",
-                   choices=["all", "futures", "spot", "rank", "inventory", "index"],
+                   choices=["all", "futures", "spot", "rank",
+                            "inventory", "regional"],
                    default="all")
     p.add_argument("--start", default="2015-01-01")
     args = p.parse_args()

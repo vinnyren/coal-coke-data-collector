@@ -22,13 +22,17 @@ python run.py --mode backfill --start 2015-01-01
 # 每日增量（只补最新交易日）
 python run.py --mode daily
 
-# 只更某一类: futures | spot | rank | inventory | index | all
+# 只更某一类: futures | spot | rank | inventory | regional | all
 python run.py --mode daily --kind futures
+
+# 只更现货多地与统计（生意社/CCTD/全国煤炭交易中心 + 跨地区统计）
+python run.py --mode daily --kind regional
 ```
 
 ## 数据表
 
-futures_daily / futures_realtime / spot_basis / position_rank / inventory / index_price，
+futures_daily / futures_realtime / spot_basis / position_rank / inventory / index_price /
+spot_regional（分地区现货/指数价）/ spot_regional_stats（跨地区统计），
 均以业务主键唯一约束，重复运行幂等去重。详见 db/schema.sql。
 
 ## 数据来源

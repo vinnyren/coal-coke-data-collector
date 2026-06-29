@@ -28,3 +28,23 @@ def test_build_store_creates_tables(tmp_path, monkeypatch):
     names = {r["name"] for r in s.query(
         "SELECT name FROM sqlite_master WHERE type='table'")}
     assert "futures_daily" in names and "spot_basis" in names
+
+
+def test_regional_kind_order_and_membership(tmp_path):
+    import config
+    from storage.sqlite_store import SqliteStore
+    s = SqliteStore(str(tmp_path / "t.db"))
+    s.init_schema(config.SCHEMA_PATH)
+    names = [c.name for c in run._collectors_for_kind(s, "regional")]
+    assert names == ["web_100ppi", "web_cctd", "web_ncexc", "spot_stats"]
+
+
+def test_all_includes_regional_not_index(tmp_path):
+    import config
+    from storage.sqlite_store import SqliteStore
+    s = SqliteStore(str(tmp_path / "t.db"))
+    s.init_schema(config.SCHEMA_PATH)
+    names = [c.name for c in run._collectors_for_kind(s, "all")]
+    assert "spot_stats" in names and "web_100ppi" in names
+    # index kind 已移除
+    assert run._collectors_for_kind(s, "index") == []
