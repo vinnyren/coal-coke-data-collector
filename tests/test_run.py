@@ -51,3 +51,35 @@ def test_all_includes_regional_not_index(tmp_path):
     assert "spot_stats" in names and "web_100ppi" in names
     # index kind 已移除
     assert run._collectors_for_kind(s, "index") == []
+
+
+def test_run_once_writes_report_and_sets_exit(tmp_path, monkeypatch):
+    import config
+    monkeypatch.setenv("COAL_DB_PATH", str(tmp_path / "c.db"))
+    monkeypatch.setenv("COAL_RUNS_DIR", str(tmp_path / "runs"))
+
+    class FakeCollector:
+        def __init__(self, name, status):
+            self.name = name
+            self._status = status
+        def run(self, **kwargs):
+            rows = 5 if self._status == "ok" else 0
+            err = None if self._status != "error" else "X: boom"
+            return {"name": self.name, "status": self._status, "rows": rows,
+                    "error": err, "duration_ms": 1}
+
+    monkeypatch.setattr(run, "_collectors_for_kind",
+                        lambda store, kind: [FakeCollector("a", "ok"),
+                                             FakeCollector("b", "error")])
+    rep = run.run_once(mode="daily", kind="all", start="2015-01-01")
+    assert rep["exit_code"] == 3
+    assert (tmp_path / "runs" / "latest.json").exists()
+    assert rep["totals"]["error"] == 1
+
+
+def test_build_store_uses_env_db_path(tmp_path, monkeypatch):
+    import config
+    monkeypatch.setenv("COAL_DB_PATH", str(tmp_path / "x.db"))
+    s = run.build_store()
+    assert (tmp_path / "x.db").exists()
+    s.close()

@@ -1,7 +1,11 @@
 # run.py
 import argparse
-import datetime
+import json
+import sys
+from datetime import datetime, timezone
+
 import config
+import report
 from storage.sqlite_store import SqliteStore
 from collectors.futures_daily import FuturesDailyCollector
 from collectors.futures_realtime import FuturesRealtimeCollector
@@ -16,9 +20,13 @@ from collectors.spot_stats import SpotStatsCollector
 
 
 def build_store():
-    store = SqliteStore(str(config.DB_PATH))
+    store = SqliteStore(str(config.resolve_db_path()))
     store.init_schema(config.SCHEMA_PATH)
     return store
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
 
 
 def _collectors_for_kind(store, kind):
@@ -49,6 +57,19 @@ def run_pipeline(store, mode, kind="all", start="2015-01-01"):
     return results
 
 
+def run_once(mode, kind="all", start="2015-01-01"):
+    started = _utcnow()
+    store = build_store()
+    results = run_pipeline(store, mode, kind, start)
+    store.close()
+    finished = _utcnow()
+    rep = report.build_report(results, mode, kind,
+                              started.isoformat(), finished.isoformat())
+    rep["timestamp_slug"] = finished.strftime("%Y%m%dT%H%M%SZ")
+    report.write_report(rep, config.resolve_runs_dir())
+    return rep
+
+
 def main():
     p = argparse.ArgumentParser(description="煤焦交易数据采集")
     p.add_argument("--mode", choices=["backfill", "daily"], default="daily")
@@ -57,13 +78,16 @@ def main():
                             "inventory", "regional"],
                    default="all")
     p.add_argument("--start", default="2015-01-01")
+    p.add_argument("--format", choices=["json", "text"], default="json")
     args = p.parse_args()
-    store = build_store()
     start = args.start if args.mode == "backfill" else \
-        datetime.date.today().isoformat()
-    result = run_pipeline(store, args.mode, args.kind, start)
-    store.close()
-    print("采集完成:", result)
+        datetime.now(timezone.utc).date().isoformat()
+    rep = run_once(args.mode, args.kind, start)
+    if args.format == "text":
+        print(report.format_text(rep))
+    else:
+        print(json.dumps(rep, ensure_ascii=False))
+    sys.exit(rep["exit_code"])
 
 
 if __name__ == "__main__":
