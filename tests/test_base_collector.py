@@ -24,17 +24,30 @@ def test_with_retry_raises_after_exhaustion(monkeypatch):
         with_retry(always_fail, retries=2, backoff=0)
 
 
-def test_run_isolates_exception_and_returns_zero():
-    class Boom(BaseCollector):
-        name = "boom"
-        def fetch(self, **kwargs):
-            raise RuntimeError("explode")
-    assert Boom(store=None).run() == 0
-
-
-def test_run_returns_fetch_count():
+def test_run_ok_status_with_rows():
     class Good(BaseCollector):
         name = "good"
         def fetch(self, **kwargs):
             return 7
-    assert Good(store=None).run() == 7
+    r = Good(store=None).run()
+    assert r["name"] == "good" and r["status"] == "ok" and r["rows"] == 7
+    assert r["error"] is None and isinstance(r["duration_ms"], int)
+
+
+def test_run_empty_status_when_zero_rows():
+    class Empty(BaseCollector):
+        name = "empty"
+        def fetch(self, **kwargs):
+            return 0
+    r = Empty(store=None).run()
+    assert r["status"] == "empty" and r["rows"] == 0 and r["error"] is None
+
+
+def test_run_error_status_on_exception():
+    class Boom(BaseCollector):
+        name = "boom"
+        def fetch(self, **kwargs):
+            raise RuntimeError("explode")
+    r = Boom(store=None).run()
+    assert r["status"] == "error" and r["rows"] == 0
+    assert "explode" in r["error"]

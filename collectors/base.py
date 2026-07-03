@@ -39,10 +39,21 @@ class BaseCollector:
         raise NotImplementedError
 
     def run(self, **kwargs):
+        start = time.monotonic()
         try:
-            n = self.fetch(**kwargs)
-            self.log.info("%s 写入 %s 行", self.name, n)
-            return n
+            rows = self.fetch(**kwargs)
+            rows = int(rows or 0)
+            status = config.STATUS_OK if rows > 0 else config.STATUS_EMPTY
+            error = None
+            self.log.info("%s 写入 %s 行", self.name, rows)
         except Exception as e:  # noqa: BLE001
-            self.log.warning("%s 采集失败: %s", self.name, e)
-            return 0
+            rows = 0
+            status = config.STATUS_ERROR
+            # 报告里只留类型 + 限长摘要（仅截断，非脱敏）；完整堆栈仅进文件日志
+            error = f"{type(e).__name__}: {str(e)[:config.MAX_ERROR_LEN]}"
+            self.log.warning("%s 采集失败: %s", self.name, e, exc_info=True)
+        return {
+            "name": self.name, "status": status, "rows": rows,
+            "error": error,
+            "duration_ms": int((time.monotonic() - start) * 1000),
+        }

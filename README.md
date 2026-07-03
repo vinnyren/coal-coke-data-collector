@@ -25,6 +25,8 @@ python run.py --mode backfill --start 2015-01-01   # 首次历史回补
 python run.py --mode daily                         # 每日增量
 ```
 
+无人值守/定时：`python run.py --mode daily --kind all`（stdout 输出 JSON 报告 + 退出码；详见 SKILL.md 与 scripts/openclaw-task.example.md）。
+
 ## 状态
 
 设计已确认，开发中。详见 [设计文档](docs/superpowers/specs/2026-06-28-coal-coke-data-collector-design.md)。

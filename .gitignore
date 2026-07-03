@@ -11,6 +11,9 @@ db/*.db-journal
 logs/
 *.log
 
+# 运行报告（无人值守产物）
+runs/
+
 # OS / IDE
 .DS_Store
 .idea/
