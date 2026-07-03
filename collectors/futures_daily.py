@@ -1,3 +1,8 @@
+"""期货主力连续日线采集。
+
+采集焦煤/焦炭/动力煤主力连续合约的日 K 线（开高低收/成交量/持仓量），
+数据源为 AKShare 新浪接口 futures_main_sina，幂等写入 futures_daily 表。
+"""
 from datetime import date
 import akshare as ak
 import config
@@ -23,9 +28,12 @@ def _pick(row, keys):
 
 
 class FuturesDailyCollector(BaseCollector):
+    """采集各品种主力连续日线并写入 futures_daily 表。"""
+
     name = "futures_daily"
 
     def fetch(self, start="2015-01-01", end=None):
+        """拉取 [start, end] 区间各品种日线，写入 futures_daily，返回写入总行数。"""
         end = end or date.today().isoformat()
         total = 0
         for vname, v in config.VARIETIES.items():

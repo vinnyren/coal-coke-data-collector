@@ -1,3 +1,8 @@
+"""现货基差采集。
+
+采集焦煤/焦炭/动力煤的现货价、主力/近月合约价及基差、基差率，数据源为
+AKShare 接口 futures_spot_price，按品种与日期幂等写入 spot_basis 表。
+"""
 from datetime import date as _date
 import akshare as ak
 import config
@@ -14,9 +19,12 @@ def _g(row, *keys):
 
 
 class SpotBasisCollector(BaseCollector):
+    """采集各品种现货基差并写入 spot_basis 表。"""
+
     name = "spot_basis"
 
     def fetch(self, date=None):
+        """拉取指定日期（默认今日）的现货/合约价与基差，写入 spot_basis，返回写入行数。"""
         d = (date or _date.today().isoformat()).replace("-", "")
         df = with_retry(lambda: ak.futures_spot_price(d))
         if df is None or df.empty:

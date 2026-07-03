@@ -1,3 +1,5 @@
+"""中国太原煤炭价格指数（ctctc.cn）综合指数 JSON 接口采集：一次抓取全部历史期数，
+映射煤焦品种后写入 spot_regional 表（产地维度）。"""
 import re
 import requests
 from collectors.base import BaseCollector, with_retry
@@ -55,9 +57,12 @@ def parse_ctctc(data_rows: list) -> list:
 
 
 class CtctcSource(BaseCollector):
+    """中国太原煤炭价格指数采集器，将煤焦综合指数写入 spot_regional（产地维度）。"""
+
     name = "web_ctctc"
 
     def fetch(self, data_rows=None):
+        """抓取（或传入 data_rows）解析综合指数，upsert 到 spot_regional，返回写入行数。"""
         if data_rows is None:
             try:
                 resp = with_retry(lambda: requests.get(

@@ -1,3 +1,5 @@
+"""生意社 100ppi 现货表采集：抓取煤焦三品种当日现货价（全国维度），
+过 HW_CHECK 反爬挑战后写入 spot_regional 表。"""
 import re
 from datetime import date as _date
 import requests
@@ -65,9 +67,12 @@ def _fetch_html(session: requests.Session) -> str:
 
 
 class Ppi100Source(BaseCollector):
+    """生意社 100ppi 现货表采集器，将煤焦三品种当日现货价写入 spot_regional。"""
+
     name = "web_100ppi"
 
     def fetch(self, html=None, trade_date=None):
+        """抓取（或传入 html）并解析当日煤焦现货价，upsert 到 spot_regional，返回写入行数。"""
         trade_date = trade_date or _date.today().isoformat()
         if html is None:
             try:

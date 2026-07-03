@@ -1,9 +1,15 @@
+"""采集器基础设施：日志器、重试封装与 BaseCollector 基类。
+
+不采集具体数据，为各 collector 提供统一的日志、重试与运行封装；
+run() 捕获异常并返回结构化 RunResult dict（name/status/rows/error/duration_ms）。
+"""
 import time
 import logging
 import config
 
 
 def get_logger(name):
+    """返回带文件与流双处理器的 logger（日志写入 config.LOG_DIR/collector.log）。"""
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger(name)
     if not logger.handlers:
@@ -17,6 +23,7 @@ def get_logger(name):
 
 
 def with_retry(fn, retries=3, backoff=2):
+    """调用 fn 并在异常时线性退避重试，最多 retries 次；全部失败则抛最后一次异常。"""
     last = None
     for attempt in range(1, retries + 1):
         try:
@@ -29,6 +36,8 @@ def with_retry(fn, retries=3, backoff=2):
 
 
 class BaseCollector:
+    """采集器基类：子类实现 fetch() 拉取并写库，run() 负责统一封装与错误处理。"""
+
     name = "base"
 
     def __init__(self, store):
@@ -36,9 +45,11 @@ class BaseCollector:
         self.log = get_logger(f"collector.{self.name}")
 
     def fetch(self, **kwargs):
+        """由子类实现：拉取数据并写库，返回写入行数（int）。"""
         raise NotImplementedError
 
     def run(self, **kwargs):
+        """执行 fetch 并返回 RunResult dict（name/status/rows/error/duration_ms），异常不外抛。"""
         start = time.monotonic()
         try:
             rows = self.fetch(**kwargs)

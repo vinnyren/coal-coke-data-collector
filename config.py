@@ -1,3 +1,9 @@
+"""项目全局配置：路径解析、跨模块常量与品种/地区关键词表。
+
+提供 resolve_db_path/resolve_runs_dir（环境变量 COAL_DB_PATH/COAL_RUNS_DIR 优先，
+否则回退到项目内默认路径），采集状态常量 STATUS_*、进程退出码 EXIT_*、
+回补起始日 BACKFILL_START，以及品种标识 VARIETIES 与地区分类关键词表。
+"""
 import os
 from pathlib import Path
 
