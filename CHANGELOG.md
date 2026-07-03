@@ -2,6 +2,20 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.2.1.0] - 2026-07-03
+
+文档与注释完善（代码零改动）。
+
+### 文档
+
+- 新增 **`docs/安装与使用指南.md`**：环境要求、安装、命令行参数、数据表、无人值守/定时（cron/launchd/OpenClaw）、运行报告字段、环境变量、数据来源与容错、排错、测试的完整说明。
+- `README.md`：更新为 0.2.0.0 后状态，补 `--kind`/无人值守退出码/数据表小节，指向新指南。
+- `SKILL.md`：补 `--format` 示例并指向新指南。
+
+### 注释
+
+- 为全部 14 个源码模块（`collectors/*`、`sources/*`、`storage/sqlite_store.py`、`config.py`、`report.py`、`run.py`）补充中文**模块级 docstring**，并为缺失的关键类/公开函数补一行说明；表名与数据源均按实际代码填写。纯增量（128 行新增，0 删除），逻辑零改动。
+
 ## [0.2.0.0] - 2026-07-03
 
 无人值守 / 定时任务重构：把执行与回报层改造成可被 OpenClaw 类智能体定时无人值守运行。
