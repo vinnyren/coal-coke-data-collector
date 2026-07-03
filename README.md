@@ -23,10 +23,30 @@
 pip install -r requirements.txt
 python run.py --mode backfill --start 2015-01-01   # 首次历史回补
 python run.py --mode daily                         # 每日增量
+python run.py --mode daily --kind regional         # 只更某一类
 ```
 
-无人值守/定时：`python run.py --mode daily --kind all`（stdout 输出 JSON 报告 + 退出码；详见 SKILL.md 与 scripts/openclaw-task.example.md）。
+`--kind`：`all | futures | spot | rank | inventory | regional`。
 
-## 状态
+## 无人值守 / 定时
 
-设计已确认，开发中。详见 [设计文档](docs/superpowers/specs/2026-06-28-coal-coke-data-collector-design.md)。
+```bash
+python run.py --mode daily --kind all      # 默认 --format json
+```
+
+- stdout 输出单个 JSON 运行报告；同时原子写 `runs/latest.json`（权威机器输出）与 `runs/run-<UTC时间戳>.json` 归档。
+- **退出码契约 `{0,2,3}`**：`0`=全部跑通（含 0 行软失败）；`3`=有采集器异常；`2`=致命（DB/报告写出失败）。
+- 路径可用 `COAL_DB_PATH` / `COAL_RUNS_DIR`（支持 `~`）覆盖。
+
+定时与调度示例见 `scripts/cron.example`、`scripts/openclaw-task.example.md`。
+
+## 数据表
+
+`futures_daily` / `futures_realtime` / `spot_basis` / `position_rank` / `inventory` / `index_price` / `spot_regional`（分地区现货/指数）/ `spot_regional_stats`（跨地区统计）；均以业务主键唯一约束，重复运行幂等去重。详见 `db/schema.sql`。
+
+## 文档
+
+- **[安装与使用指南](docs/安装与使用指南.md)** — 安装、参数、定时、报告、排错的完整说明。
+- [SKILL.md](SKILL.md) — 技能清单与无人值守约定。
+- [CHANGELOG.md](CHANGELOG.md) — 版本变更日志（当前 0.2.0.0）。
+- [设计文档](docs/superpowers/specs/2026-06-28-coal-coke-data-collector-design.md) — 架构设计。

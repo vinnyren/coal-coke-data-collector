@@ -27,7 +27,12 @@ python run.py --mode daily --kind futures
 
 # 只更现货多地与统计（生意社/CCTD/全国煤炭交易中心/中国太原煤炭价格指数 + 跨地区统计）
 python run.py --mode daily --kind regional
+
+# 人类可读摘要（默认 --format json）
+python run.py --mode daily --kind inventory --format text
 ```
+
+> 安装、参数、定时、报告字段与排错的完整说明见 **[docs/安装与使用指南.md](docs/安装与使用指南.md)**。
 
 ## 无人值守 / 定时任务（OpenClaw 类智能体）
 
