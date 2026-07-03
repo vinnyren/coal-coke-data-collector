@@ -6,6 +6,22 @@ DB_PATH = BASE_DIR / "db" / "coal_data.db"
 SCHEMA_PATH = BASE_DIR / "db" / "schema.sql"
 LOG_DIR = BASE_DIR / "logs"
 
+# 采集器运行状态（base.py 产出，report.py 消费；避免字符串跨模块耦合）
+STATUS_OK = "ok"        # 跑通且写入行数 > 0
+STATUS_EMPTY = "empty"  # 跑通但写入 0 行（软失败）
+STATUS_ERROR = "error"  # fetch 抛异常
+
+# 进程退出码（无人值守调度器据此判断健康度）
+EXIT_OK = 0              # 无 error（全 ok/empty）
+EXIT_FATAL = 2          # 致命：DB 初始化失败 / 无可运行采集器 / 报告写出失败
+EXIT_COLLECTOR_ERROR = 3  # 存在 status=error 的采集器
+
+# 回补默认起始日期（backfill 模式）
+BACKFILL_START = "2015-01-01"
+
+# 报告中单条 error 文本的最大长度（防止上游异常携带的敏感串/长文本膨胀报告）
+MAX_ERROR_LEN = 500
+
 # 品种 → 各接口所需标识
 # main_symbol: 新浪主力连续代码; spot_var: 现货基差/持仓接口的品种缩写
 VARIETIES = {

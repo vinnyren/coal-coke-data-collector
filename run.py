@@ -47,7 +47,7 @@ def _collectors_for_kind(store, kind):
     return groups.get(kind, [])
 
 
-def run_pipeline(store, mode, kind="all", start="2015-01-01"):
+def run_pipeline(store, kind="all", start=config.BACKFILL_START):
     results = []
     for c in _collectors_for_kind(store, kind):
         if c.name == "futures_daily":
@@ -57,16 +57,32 @@ def run_pipeline(store, mode, kind="all", start="2015-01-01"):
     return results
 
 
-def run_once(mode, kind="all", start="2015-01-01"):
+def _fatal_report(mode, kind, started, finished, error):
+    """致命失败（DB 初始化 / 报告写出）时构造 exit_code=2 的报告。"""
+    rep = report.build_report([], mode, kind,
+                              started.isoformat(), finished.isoformat())
+    return {**rep, "exit_code": config.EXIT_FATAL, "error": error}
+
+
+def run_once(mode, kind="all", start=config.BACKFILL_START):
     started = _utcnow()
-    store = build_store()
-    results = run_pipeline(store, mode, kind, start)
-    store.close()
+    try:
+        store = build_store()
+    except Exception as e:  # noqa: BLE001 — DB 初始化失败属致命，退出码 2
+        return _fatal_report(mode, kind, started, _utcnow(),
+                             f"build_store failed: {type(e).__name__}: {e}")
+    try:
+        results = run_pipeline(store, kind, start)
+    finally:
+        store.close()
     finished = _utcnow()
     rep = report.build_report(results, mode, kind,
                               started.isoformat(), finished.isoformat())
-    rep["timestamp_slug"] = finished.strftime("%Y%m%dT%H%M%SZ")
-    report.write_report(rep, config.resolve_runs_dir())
+    try:
+        report.write_report(rep, config.resolve_runs_dir())
+    except Exception as e:  # noqa: BLE001 — 报告写出失败属致命，退出码 2
+        return {**rep, "exit_code": config.EXIT_FATAL,
+                "error": f"write_report failed: {type(e).__name__}: {e}"}
     return rep
 
 
@@ -77,11 +93,10 @@ def main():
                    choices=["all", "futures", "spot", "rank",
                             "inventory", "regional"],
                    default="all")
-    p.add_argument("--start", default="2015-01-01")
+    p.add_argument("--start", default=config.BACKFILL_START)
     p.add_argument("--format", choices=["json", "text"], default="json")
     args = p.parse_args()
-    start = args.start if args.mode == "backfill" else \
-        datetime.now(timezone.utc).date().isoformat()
+    start = args.start if args.mode == "backfill" else _utcnow().date().isoformat()
     rep = run_once(args.mode, args.kind, start)
     if args.format == "text":
         print(report.format_text(rep))

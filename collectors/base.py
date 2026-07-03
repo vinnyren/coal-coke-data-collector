@@ -43,12 +43,15 @@ class BaseCollector:
         try:
             rows = self.fetch(**kwargs)
             rows = int(rows or 0)
-            status = "ok" if rows > 0 else "empty"
+            status = config.STATUS_OK if rows > 0 else config.STATUS_EMPTY
             error = None
             self.log.info("%s 写入 %s 行", self.name, rows)
         except Exception as e:  # noqa: BLE001
-            rows, status, error = 0, "error", f"{type(e).__name__}: {e}"
-            self.log.warning("%s 采集失败: %s", self.name, e)
+            rows = 0
+            status = config.STATUS_ERROR
+            # 报告里只留类型 + 截断后的摘要，完整堆栈进文件日志（避免敏感串外泄/报告膨胀）
+            error = f"{type(e).__name__}: {str(e)[:config.MAX_ERROR_LEN]}"
+            self.log.warning("%s 采集失败: %s", self.name, e, exc_info=True)
         return {
             "name": self.name, "status": status, "rows": rows,
             "error": error,
