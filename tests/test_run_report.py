@@ -53,3 +53,36 @@ def test_format_text_has_summary():
                               "2026-06-29T00:00:01+00:00")
     txt = report.format_text(rep)
     assert "a" in txt and "error" in txt and "exit_code" in txt
+
+
+def test_duration_ms_clamped_to_zero_on_clock_regression():
+    # NTP 回拨：finished 早于 started，顶层 duration_ms 钳位为 0 而非负值
+    rep = report.build_report([_rr("a", "ok", 1)], "daily", "all",
+                              "2026-06-29T00:00:05+00:00",
+                              "2026-06-29T00:00:00+00:00")
+    assert rep["duration_ms"] == 0
+
+
+def test_write_report_no_overwrite_on_slug_collision(tmp_path):
+    # 同一 finished_at（同秒 slug）连写两次：第二次不得覆盖第一次的归档
+    rep = report.build_report([_rr("a", "ok", 1)], "daily", "all",
+                              "2026-06-29T00:00:00+00:00",
+                              "2026-06-29T00:00:01+00:00")
+    p1 = report.write_report(rep, tmp_path)
+    p2 = report.write_report(rep, tmp_path)
+    assert p1 != p2
+    assert p1.exists() and p2.exists()
+    assert p1.name == "run-20260629T000001Z.json"
+    assert p2.name == "run-20260629T000001Z-1.json"
+
+
+def test_write_report_is_atomic_valid_json(tmp_path):
+    # latest.json 始终是完整可解析 JSON（原子替换，无半截文件）
+    rep = report.build_report([_rr("a", "ok", 3)], "daily", "all",
+                              "2026-06-29T00:00:00+00:00",
+                              "2026-06-29T00:00:01+00:00")
+    report.write_report(rep, tmp_path)
+    loaded = json.loads((tmp_path / "latest.json").read_text(encoding="utf-8"))
+    assert loaded["totals"]["rows"] == 3
+    # 无遗留临时文件
+    assert not list(tmp_path.glob(".tmp-report-*"))

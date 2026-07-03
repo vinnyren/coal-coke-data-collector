@@ -151,13 +151,17 @@ def test_main_all_ok_exits_zero_text_format(tmp_path, monkeypatch, capsys):
     assert "采集完成" in out and "a: ok" in out
 
 
-def test_run_once_exit_two_on_db_init_failure(monkeypatch):
+def test_run_once_exit_two_on_db_init_failure(tmp_path, monkeypatch):
+    monkeypatch.setenv("COAL_RUNS_DIR", str(tmp_path / "runs"))
+
     def boom():
         raise RuntimeError("db down")
     monkeypatch.setattr(run, "build_store", boom)
     rep = run.run_once(mode="daily", kind="all")
     assert rep["exit_code"] == 2
     assert "db down" in rep["error"]
+    # M1：致命也应写出 latest.json，避免旧的成功报告掩盖失败
+    assert (tmp_path / "runs" / "latest.json").exists()
 
 
 def test_run_once_exit_two_on_report_write_failure(tmp_path, monkeypatch):
@@ -172,3 +176,22 @@ def test_run_once_exit_two_on_report_write_failure(tmp_path, monkeypatch):
     rep = run.run_once(mode="daily", kind="all")
     assert rep["exit_code"] == 2
     assert "disk full" in rep["error"]
+
+
+def test_main_catch_all_exits_two_on_unexpected_error(tmp_path, monkeypatch, capsys):
+    import json
+    import pytest
+    monkeypatch.setenv("COAL_RUNS_DIR", str(tmp_path / "runs"))
+
+    def boom(*a, **k):
+        raise RuntimeError("kaboom")
+    # H4：run_once 之外的任何逃逸异常，main 也必须归为 exit 2，不得逃逸为 exit 1
+    monkeypatch.setattr(run, "run_once", boom)
+    monkeypatch.setattr("sys.argv",
+                        ["run.py", "--mode", "daily", "--kind", "all",
+                         "--format", "json"])
+    with pytest.raises(SystemExit) as ex:
+        run.main()
+    assert ex.value.code == 2
+    out = json.loads(capsys.readouterr().out)
+    assert out["exit_code"] == 2 and "kaboom" in out["error"]

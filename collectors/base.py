@@ -49,7 +49,7 @@ class BaseCollector:
         except Exception as e:  # noqa: BLE001
             rows = 0
             status = config.STATUS_ERROR
-            # 报告里只留类型 + 截断后的摘要，完整堆栈进文件日志（避免敏感串外泄/报告膨胀）
+            # 报告里只留类型 + 限长摘要（仅截断，非脱敏）；完整堆栈仅进文件日志
             error = f"{type(e).__name__}: {str(e)[:config.MAX_ERROR_LEN]}"
             self.log.warning("%s 采集失败: %s", self.name, e, exc_info=True)
         return {

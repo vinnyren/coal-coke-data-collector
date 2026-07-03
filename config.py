@@ -48,13 +48,17 @@ CONSUMPTION_AREAS = ["唐山", "华北", "华东", "华中", "华南", "西南",
                      "钢厂", "焦化厂"]
 
 
+def _env_path(var):
+    """读取路径类环境变量：去首尾空白后展开 ~；空串或纯空白视为未设置。"""
+    val = os.environ.get(var, "").strip()
+    return Path(val).expanduser() if val else None
+
+
 def resolve_db_path():
     """DB 路径：环境变量 COAL_DB_PATH 优先，回退 DB_PATH。"""
-    env = os.environ.get("COAL_DB_PATH")
-    return Path(env) if env else DB_PATH
+    return _env_path("COAL_DB_PATH") or DB_PATH
 
 
 def resolve_runs_dir():
     """运行报告目录：环境变量 COAL_RUNS_DIR 优先，回退 <项目>/runs。"""
-    env = os.environ.get("COAL_RUNS_DIR")
-    return Path(env) if env else BASE_DIR / "runs"
+    return _env_path("COAL_RUNS_DIR") or (BASE_DIR / "runs")
