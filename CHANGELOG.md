@@ -2,6 +2,32 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.2.0.0] - 2026-07-03
+
+无人值守 / 定时任务重构：把执行与回报层改造成可被 OpenClaw 类智能体定时无人值守运行。
+
+### 新增
+
+- **结构化运行结果**：`BaseCollector.run()` 返回 `RunResult`（`name/status/rows/error/duration_ms`），异常在 `run()` 内隔离并标 `status=error`；`status ∈ {ok, empty, error}`。
+- **机器可读运行报告**（新模块 `report.py`）：汇总各源为含 `totals` 与 `exit_code` 的报告；写 `runs/latest.json` + `runs/run-<UTC时间戳>.json`（同秒冲突自动追加 `-N`，原子写不覆盖）。
+- **退出码契约** `{0,2,3}`：`0`=全部跑通（含 0 行软失败）；`3`=有采集器异常；`2`=致命（DB 初始化 / 报告写出失败 / 任何逃逸异常）。
+- **stdout 输出**：`--format json`（默认，单个可解析 JSON）/ `--format text`（人类可读摘要）。
+- **环境变量配置**：`COAL_DB_PATH`、`COAL_RUNS_DIR`（支持 `~` 展开）。
+- **调度文档**：`SKILL.md` 无人值守段、`scripts/openclaw-task.example.md`（派生会话指令、频率、flock 防重叠、保留清理、健康判断）。
+
+### 加固
+
+- cron/systemd 无 locale 时启动即重配 stdout 为 UTF-8，避免中文报告崩为 exit 1。
+- `main()` 兜底捕获任何逃逸异常归为 exit 2，维持退出码契约；`store.close()` 静默不掩盖结果。
+- 致命失败（含 DB 初始化）也写出 `latest.json`，避免旧的成功报告掩盖失败。
+- 顶层 `duration_ms` 钳位为 0（NTP 回拨不产生负值）；采集异常摘要限长。
+- 提取 `STATUS_*/EXIT_*/BACKFILL_START` 常量，消除跨模块字符串耦合与退出码魔法数。
+
+### 测试
+
+- 76 个单元测试（pytest）：RunResult 状态、报告构建/退出码/原子写/防撞、`run_once`/`main` 编排与 JSON/text 输出、两条致命路径与兜底、环境路径解析。
+- `--kind regional` / `inventory` 端到端实测通过（exit 0）；DB 初始化失败端到端得 exit 2 + latest.json。
+
 ## [0.1.0.0] - 2026-06-29
 
 首个版本：煤焦交易数据采集技能（焦煤/焦炭/动力煤，期货+现货，写入本地 SQLite）。
