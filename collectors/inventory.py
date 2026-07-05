@@ -1,3 +1,8 @@
+"""期货库存采集。
+
+采集焦煤/焦炭/动力煤的期货库存及其增减，数据源为 AKShare 东财接口
+futures_inventory_em，幂等写入 inventory 表。
+"""
 import akshare as ak
 import config
 from collectors.base import BaseCollector, with_retry
@@ -11,9 +16,12 @@ def _g(row, *keys):
 
 
 class InventoryCollector(BaseCollector):
+    """采集各品种期货库存并写入 inventory 表。"""
+
     name = "inventory"
 
     def fetch(self):
+        """逐品种拉取库存历史，写入 inventory，返回写入总行数（单品种接口失败则跳过）。"""
         total = 0
         for vname, v in config.VARIETIES.items():
             symbol = v["inventory_name"]

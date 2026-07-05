@@ -1,3 +1,10 @@
+"""运行报告构建与持久化：汇总采集结果、判定退出码、原子写归档。
+
+build_report 把各采集器结果汇总成报告字典（含 totals 与 exit_code）；
+compute_exit_code 依据结果实现 {0,2,3} 退出码契约（空结果→2、含 error→3、否则→0）；
+write_report 以临时文件+os.replace 原子写出时间戳报告与 latest.json 指针；
+format_text 渲染人类可读的文本摘要。
+"""
 import json
 import os
 import tempfile
@@ -11,6 +18,7 @@ _SLUG_FMT = "%Y%m%dT%H%M%SZ"
 
 
 def compute_exit_code(results):
+    """按结果判定进程退出码：空→EXIT_FATAL(2)、含 error→3、否则 EXIT_OK(0)。"""
     if not results:
         return config.EXIT_FATAL
     if any(r.get("status") == config.STATUS_ERROR for r in results):
@@ -31,6 +39,7 @@ def slug_from_iso(finished_iso):
 
 
 def build_report(results, mode, kind, started_at, finished_at):
+    """汇总采集结果为报告字典：含 mode/kind、耗时、totals 统计与 exit_code。"""
     totals = {
         "rows": sum(int(r.get("rows") or 0) for r in results),
         "ok": sum(1 for r in results if r.get("status") == config.STATUS_OK),
@@ -77,6 +86,7 @@ def _unique_ts_path(runs_dir, slug):
 
 
 def write_report(report_dict, runs_dir):
+    """原子写出报告到 runs_dir：归档 run-<slug>.json 并刷新 latest.json，返回归档路径。"""
     runs_dir = Path(runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
     # slug 优先用调用方显式提供的，否则由 finished_at 派生（不再回退占位符）
@@ -89,6 +99,7 @@ def write_report(report_dict, runs_dir):
 
 
 def format_text(report_dict):
+    """将报告字典渲染为人类可读的多行文本摘要（表头、totals、逐采集器结果）。"""
     lines = [
         f"采集完成 mode={report_dict['mode']} kind={report_dict['kind']} "
         f"exit_code={report_dict['exit_code']}",

@@ -1,3 +1,5 @@
+"""CCTD（中国煤炭市场网）公开指数页采集：解析指数名/日期/价格写入 index_price，
+再经地区分类器 classify 结构化后写入 spot_regional 表。"""
 import requests
 from bs4 import BeautifulSoup
 from collectors.base import BaseCollector, with_retry
@@ -8,6 +10,7 @@ SOURCE = "cctd"
 
 
 def parse_index(html):
+    """解析 CCTD 指数页 <tr>，产出 {index_name, trade_date, price, source} 记录列表。"""
     soup = BeautifulSoup(html, "html.parser")
     out = []
     for tr in soup.find_all("tr"):
@@ -25,9 +28,12 @@ def parse_index(html):
 
 
 class CctdIndexSource(BaseCollector):
+    """CCTD 公开指数页采集器，写入 index_price 并经 classify 写入 spot_regional。"""
+
     name = "web_cctd"
 
     def fetch(self, html=None):
+        """抓取（或传入 html）解析指数写 index_price，再经地区分类器写 spot_regional，返回总行数。"""
         if html is None:
             try:
                 resp = with_retry(lambda: requests.get(CCTD_URL, timeout=15))

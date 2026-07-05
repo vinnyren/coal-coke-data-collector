@@ -1,3 +1,8 @@
+"""期货实时行情采集。
+
+采集焦煤/焦炭/动力煤主力合约的实时快照（最新价/买卖价/成交量/持仓量），
+数据源为 AKShare 新浪接口 futures_zh_spot，按抓取时刻幂等写入 futures_realtime 表。
+"""
 from datetime import datetime
 import akshare as ak
 import config
@@ -14,9 +19,12 @@ def _g(row, *keys):
 
 
 class FuturesRealtimeCollector(BaseCollector):
+    """采集各品种实时行情快照并写入 futures_realtime 表。"""
+
     name = "futures_realtime"
 
     def fetch(self, now=None):
+        """按 now（默认当前时刻）抓取一次实时快照，写入 futures_realtime，返回写入行数。"""
         captured = now or datetime.now().isoformat(timespec="seconds")
         symbols = ",".join(v["main_symbol"] for v in config.VARIETIES.values())
         df = with_retry(lambda: ak.futures_zh_spot(symbol=symbols, market="CF"))

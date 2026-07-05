@@ -1,3 +1,5 @@
+"""全国煤炭交易中心（ncexc.com）动力煤指数 JSON 接口采集：抓取直达煤(产地)与
+下水煤(港口)指数，写入 spot_regional 表。"""
 import requests
 from collectors.base import BaseCollector, with_retry
 
@@ -53,9 +55,12 @@ def parse_ncexc(data_rows: list) -> list:
 
 
 class NcexcSource(BaseCollector):
+    """全国煤炭交易中心动力煤指数采集器，将各热值指数写入 spot_regional。"""
+
     name = "web_ncexc"
 
     def fetch(self, data_rows=None):
+        """逐 indexType 抓取（或传入 data_rows）解析动力煤指数，upsert 到 spot_regional，返回行数。"""
         if data_rows is None:
             data_rows = []
             for it in INDEX_TYPES:

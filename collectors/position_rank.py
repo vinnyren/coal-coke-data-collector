@@ -1,3 +1,8 @@
+"""大商所持仓排名采集。
+
+采集焦煤/焦炭（大商所 dce 品种）的会员多空持仓排名及增减，数据源为
+AKShare 接口 futures_dce_position_rank，按多/空两侧幂等写入 position_rank 表。
+"""
 from datetime import date as _date
 import akshare as ak
 import config
@@ -16,9 +21,12 @@ def _g(row, *keys):
 
 
 class PositionRankCollector(BaseCollector):
+    """采集大商所品种会员多空持仓排名并写入 position_rank 表。"""
+
     name = "position_rank"
 
     def fetch(self, date=None):
+        """拉取指定日期（默认今日）各 dce 品种多空持仓排名，写入 position_rank，返回写入总行数。"""
         d = (date or _date.today().isoformat()).replace("-", "")
         data = with_retry(lambda: ak.futures_dce_position_rank(date=d))
         if not data:

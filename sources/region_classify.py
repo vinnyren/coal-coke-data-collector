@@ -1,7 +1,10 @@
+"""地区分类器：把煤焦现货价格/指数名称归类为 (品种, 地区类型, 地区) 三元组，
+供 web_cctd 等现货源将非结构化名称结构化后写入 spot_regional 表。"""
 import config
 
 
 def _match_variety(name):
+    """返回名称命中的品种（焦煤/焦炭/动力煤等），无品种关键词命中时返回 None。"""
     for variety, kws in config.VARIETY_KEYWORDS.items():
         if any(kw in name for kw in kws):
             return variety
@@ -9,6 +12,7 @@ def _match_variety(name):
 
 
 def _first_hit(name, names):
+    """返回 names 中第一个作为子串出现在 name 内的元素，均未命中返回 None。"""
     for n in names:
         if n in name:
             return n

@@ -1,3 +1,8 @@
+"""现货地区价格统计（本地聚合，无外部数据源）。
+
+读取已入库的 spot_regional 表，按品种+地区类型（及全部 ALL）计算样本数、
+均价、最高/最低价与价差等，幂等写入 spot_regional_stats 表。
+"""
 from collectors.base import BaseCollector
 
 
@@ -18,9 +23,12 @@ def _stats_for(samples):
 
 
 class SpotStatsCollector(BaseCollector):
+    """基于 spot_regional 计算跨地区价格统计并写入 spot_regional_stats 表。"""
+
     name = "spot_stats"
 
     def fetch(self, date=None):
+        """按交易日（默认全部已入库日期）聚合各品种地区价格统计，写入 spot_regional_stats，返回写入行数。"""
         if date is None:
             dates = [r["trade_date"] for r in self.store.query(
                 "SELECT DISTINCT trade_date FROM spot_regional")]
