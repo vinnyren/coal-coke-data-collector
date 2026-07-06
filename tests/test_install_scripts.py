@@ -38,3 +38,38 @@ def test_install_rejects_old_python(tmp_path):
     r = _run(["bash", str(INSTALL)], env=env)
     assert r.returncode != 0
     assert "3.9" in r.stderr
+
+
+BOOTSTRAP = REPO / "scripts" / "openclaw-bootstrap.sh"
+
+
+def test_bootstrap_sh_exists_and_strict_mode():
+    assert BOOTSTRAP.exists(), "scripts/openclaw-bootstrap.sh 应存在"
+    assert os.access(BOOTSTRAP, os.X_OK), "bootstrap 应可执行"
+    assert "set -euo pipefail" in BOOTSTRAP.read_text(encoding="utf-8")
+
+
+def test_bootstrap_dryrun_clone_when_missing(tmp_path):
+    target = tmp_path / "notyet"
+    r = _run(["bash", str(BOOTSTRAP)],
+             env={"COAL_BOOTSTRAP_DRYRUN": "1", "COAL_HOME": str(target)})
+    assert r.returncode == 0, r.stderr
+    assert "action=clone" in r.stdout and f"target={target}" in r.stdout
+
+
+def test_bootstrap_dryrun_pull_when_exists(tmp_path):
+    target = tmp_path / "exists"
+    (target / ".git").mkdir(parents=True)
+    r = _run(["bash", str(BOOTSTRAP)],
+             env={"COAL_BOOTSTRAP_DRYRUN": "1", "COAL_HOME": str(target)})
+    assert r.returncode == 0, r.stderr
+    assert "action=pull" in r.stdout
+
+
+def test_bootstrap_dryrun_respects_repo_url_override(tmp_path):
+    r = _run(["bash", str(BOOTSTRAP)],
+             env={"COAL_BOOTSTRAP_DRYRUN": "1",
+                  "COAL_HOME": str(tmp_path / "x"),
+                  "COAL_REPO_URL": "https://example.com/foo.git"})
+    assert r.returncode == 0, r.stderr
+    assert "url=https://example.com/foo.git" in r.stdout
