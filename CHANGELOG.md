@@ -2,6 +2,30 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.5.0.0] - 2026-07-06
+
+绕过大商所瑞数动态安全 WAF：position_rank 改用可选无头浏览器通道，并新增 skipped 降级语义。
+
+### 背景（根因）
+
+大商所（DCE）全站升级瑞数动态安全 WAF，对非浏览器请求返回 HTTP 412 + 动态混淆 JS 挑战页（`$_ts`/动态 cookie/外链混淆 JS/`_$mp()`），放行 token 由 JS 在真实浏览器 VM 里动态生成。实测：补齐浏览器 headers、只换 UA、换 akshare 其它 DCE 接口（全站同一 WAF）均仍 412。akshare 的裸 `requests.post` 因此拿到 HTML 抛 `BadZipFile`。这不是代码 bug，是外部持续性访问限制。
+
+### 新增
+
+- `sources/dce_browser.py`：DCE 持仓排名浏览器抓取通道（可选 Playwright 插件）。无头浏览器过瑞数挑战拿放行 cookie → 下载持仓排名 zip → 复用 akshare 解析（`_ReqProxy` 仅替换其内部请求、不改解析）。开关 `COAL_POSITION_RANK_BROWSER`（默认开）。
+- `STATUS_SKIPPED` 状态：因已知外部限制主动跳过（如反爬 WAF 需浏览器），**不计入 error、不触发 exit 3**，退出码契约 `{0,2,3}` 不变；报告 `totals` 新增 `skipped` 计数。`base.UpstreamBlocked` 异常触发该降级。
+- `scripts/verify_dce_browser.py`：本机端到端实测脚本（抓取→解析→打印行数，只读不写主库），用于确认浏览器通道在目标机器可用。
+
+### 变更
+
+- `position_rank` 不再走注定被 412 拦截的 akshare 裸请求：改为经浏览器通道拿 zip 再复用 akshare 解析；未装插件时降级为 `status=skipped` 并说明启用方式，不再每日误报 `BadZipFile`/exit 3。
+- `run.py --mode daily --kind all` 在无浏览器插件的默认环境下退出码由 3 回归 0（position_rank=skipped，其它源不受影响）。
+
+### 测试
+
+- 新增/改造 15 个测试（skipped 退出码与 totals、UpstreamBlocked→skipped 降级、浏览器通道开关与缺依赖降级、`_ReqProxy` 注入机制、position_rank 编排与降级传播），全量 104 passed。
+- 浏览器真实过 WAF + 真解析无法在离线/CI 覆盖，已隔离为可注入函数并提供 `verify_dce_browser.py` 供本机实测；文档明确标注需 `playwright install chromium` 后实测。
+
 ## [0.4.1.0] - 2026-07-06
 
 发布流程固化：流程文档 + 幂等发版脚本，发版从手工操作变成一条命令。
