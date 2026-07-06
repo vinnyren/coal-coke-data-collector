@@ -3,3 +3,8 @@ pandas>=1.5
 requests>=2.28
 beautifulsoup4>=4.11
 pytest>=7.0
+
+# 可选：DCE 持仓排名（position_rank）浏览器通道，用于过大商所瑞数动态安全 WAF。
+# 未安装时 position_rank 优雅降级为 status=skipped（不影响其它采集器）。
+# 启用：pip install playwright && playwright install chromium
+# playwright>=1.40
