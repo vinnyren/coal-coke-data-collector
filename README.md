@@ -10,6 +10,26 @@ curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/m
 
 clone 公开仓 → 建 venv → 装依赖 → 离线冒烟验证 → 打印运行命令。详见 [docs/OpenClaw一键安装.md](docs/OpenClaw一键安装.md)。
 
+## 作为 Claude Code 技能安装
+
+本仓库本身就是一个 Claude Code 技能（仓根即技能目录，含 `SKILL.md`）。装入个人技能目录后，任何会话提到"更新煤焦数据 / 查煤价 / 焦炭库存入了没"等都会自动触发本技能。
+
+```bash
+# 方式一（推荐）：clone 直接落到个人技能目录，再幂等安装（venv + 依赖 + 离线冒烟）
+git clone https://github.com/vinnyren/coal-coke-data-collector.git \
+  "$HOME/.claude/skills/coal-coke-data-collector"
+bash "$HOME/.claude/skills/coal-coke-data-collector/scripts/install.sh"
+
+# 方式二：curl 一键（复用 OpenClaw bootstrap，用 COAL_HOME 指定安装位置）
+curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/main/scripts/openclaw-bootstrap.sh \
+  | COAL_HOME="$HOME/.claude/skills/coal-coke-data-collector" bash
+
+# 方式三（开发者）：已有本地 clone，软链接入即可
+ln -sfn /path/to/coal-coke-data-collector "$HOME/.claude/skills/coal-coke-data-collector"
+```
+
+装好后**开新会话（或重启 Claude Code）**即可被发现；对 Claude 说"更新一下今天的煤焦数据"验证触发。日后更新：在技能目录里 `git pull`（方式二重跑同一条命令即可）。完整教程见 [docs/安装与使用指南.md](docs/安装与使用指南.md) §12。
+
 ## 数据范围
 
 | 品种 | 期货代码 | 交易所 |
