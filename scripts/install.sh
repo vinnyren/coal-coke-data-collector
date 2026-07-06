@@ -50,7 +50,7 @@ fi
 "$VENV_PY" -m pip install $USER_FLAG --upgrade pip
 "$VENV_PY" -m pip install $USER_FLAG -r requirements.txt
 
-# 离线冒烟验证（不依赖网络；当前 76 passed）
+# 离线冒烟验证（不依赖网络，确定性；全绿视为安装通过）
 echo "运行离线冒烟验证（pytest）..."
 "$VENV_PY" -m pytest -q
 

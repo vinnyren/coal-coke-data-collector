@@ -36,6 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/m
 
 ## 常见失败
 
-- 缺 `git`/`curl`：bootstrap 会明确报错，先装这两个。
+- 缺 `git`：bootstrap 明确报错退出，先装 git。
+- 缺 `curl`：一键命令无法拉取脚本（shell 报 `curl: command not found`，`bash` 收到空输入静默结束），请先装 curl。
 - Python < 3.9 或缺失：install.sh 报错退出，先装 Python 3.9+。
 - 建 venv 失败（缺 python3-venv）：自动回退 `pip install --user` 并告警。
