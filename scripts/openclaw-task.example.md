@@ -2,11 +2,24 @@
 
 让 OpenClaw 调度器按周期派生会话，运行煤焦数据采集并回报。
 
+## 自助安装（首次或环境缺失时）
+
+若目标环境未安装本技能（无 `~/.openclaw-skills/coal-coke-data-collector/.venv`），
+先跑一键安装（幂等，已装则自动更新）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/main/scripts/openclaw-bootstrap.sh | bash
+```
+
+装好后用打印出的 venv Python 运行采集（见下）。
+
 ## 调度内容（派生会话的指令）
 
-> 在项目目录运行 `python run.py --mode daily --kind all`，然后读取 `runs/latest.json`，
-> 用中文总结各数据源的 status 与行数、totals 与退出码。若退出码非 0 或存在 status=error，
-> 明确标注"采集告警"并列出失败的源与 error 摘要。不要交互式提问，自动完成并回报。
+> 先确保已安装（未装则跑上面的一键安装命令）；然后在
+> `~/.openclaw-skills/coal-coke-data-collector` 运行
+> `.venv/bin/python run.py --mode daily --kind all`，读取 `runs/latest.json`，
+> 用中文总结各源 status/行数、totals 与退出码。若退出码非 0 或存在 status=error，
+> 明确标注"采集告警"并列出失败源与 error 摘要。不要交互式提问，自动完成并回报。
 
 ## 频率建议
 
