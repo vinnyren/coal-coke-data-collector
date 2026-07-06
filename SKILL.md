@@ -47,7 +47,8 @@ bash "$SKILL_DIR/scripts/install.sh"
 
 ## 2. 判读结果（机器契约）
 
-- **退出码是最可靠的健康信号**，契约恒为 `{0,2,3}`：`0`=全部跑通（含当日 0 行的软失败）；`3`=有采集器异常（报告内 `status=error` 标明）；`2`=致命（DB 初始化/报告写出失败或任何逃逸异常）。
+- **退出码是最可靠的健康信号**，契约恒为 `{0,2,3}`：`0`=全部跑通（含当日 0 行软失败 `empty`、已知外部限制 `skipped`）；`3`=有采集器异常（报告内 `status=error` 标明）；`2`=致命（DB 初始化/报告写出失败或任何逃逸异常）。
+- **`status=skipped`**：因已知外部限制主动跳过（如 DCE 持仓排名被瑞数 WAF 拦截且未装浏览器插件），非代码错误，不触发 exit 3。要真正采集 position_rank 需装可选浏览器插件，见 `docs/安装与使用指南.md` §9。
 - **`$SKILL_DIR/runs/latest.json` 为权威机器输出**：每次运行原子覆盖（含致命失败也写出），判读以它为准，不要解析 stdout（采集库偶发打印可能污染 stdout）。
 - 另写 `runs/run-<UTC时间戳>.json` 归档（同秒冲突自动追加 `-N`，不覆盖）。
 - 报告字段：`started_at/finished_at/duration_ms/mode/kind/results[{name,status,rows,error,duration_ms}]/totals{rows,ok,empty,error}/exit_code`；`status` 取值 `ok`/`empty`（0 行软失败）/`error`。完整堆栈在 `logs/collector.log`。
@@ -58,7 +59,7 @@ bash "$SKILL_DIR/scripts/install.sh"
 
 1. 各源 `name / status / rows`；
 2. `totals` 与退出码；
-3. 若退出码非 0 或任一 `status=error`：明确标注**"采集告警"**并列出失败源与 `error` 摘要（`empty` 属软失败，非交易日/当日无新数据通常正常，连续多日为空才需排查）。
+3. 若退出码非 0 或任一 `status=error`：明确标注**"采集告警"**并列出失败源与 `error` 摘要（`empty` 属软失败，非交易日/当日无新数据通常正常，连续多日为空才需排查；`skipped` 是已知外部限制的降级，非告警，如需该源数据按 error 摘要提示启用）。
 
 无人值守/派生会话内执行时不要交互式提问，自动完成并回报。调度示例见 `scripts/cron.example` 与 `scripts/openclaw-task.example.md`。
 
