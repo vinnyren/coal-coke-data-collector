@@ -2,6 +2,24 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.4.1.0] - 2026-07-06
+
+发布流程固化：流程文档 + 幂等发版脚本，发版从手工操作变成一条命令。
+
+### 新增
+
+- `scripts/release.sh`：幂等发版脚本——校验 VERSION 四段式与 CHANGELOG 条目存在、
+  校验本地 HEAD 与 origin/main 一致，提取 CHANGELOG 条目为发布说明（摘要冒号前为
+  Release 标题），打 tag 并创建 GitHub Release；同名 Release 已存在则跳过。
+  `COAL_RELEASE_DRYRUN=1` 预演不做远程操作。
+- `docs/发布流程.md`：完整发布流程（测试→判级→CHANGELOG→分块提交→push→release.sh）
+  与常见错误表；CLAUDE.md 新增"发布"节固化路由（本仓直接提交 main，/ship 分支前置不适用）。
+
+### 测试
+
+- 新增 7 个 release.sh 脚本测试（dry-run 接缝：tag/标题提取、条目边界、坏版本号、
+  缺 CHANGELOG 条目、真实仓库 VERSION↔CHANGELOG 一致性约束），全量 90 passed。
+
 ## [0.4.0.0] - 2026-07-06
 
 Claude Code 技能化：仓库本体可直接安装为个人技能，任意会话提到煤焦数据即自动触发。
