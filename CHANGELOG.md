@@ -2,6 +2,27 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.4.0.0] - 2026-07-06
+
+Claude Code 技能化：仓库本体可直接安装为个人技能，任意会话提到煤焦数据即自动触发。
+
+### 新增
+
+- `SKILL.md` 重构为可安装技能：`name` 规范为 `coal-coke-data-collector`；触发描述覆盖
+  "更新煤焦数据 / 查煤价 / 库存·基差·持仓·分地区现货 / 查询本地煤焦库"等口语说法；
+  正文面向"从任意目录被调用"重写——以技能 base 目录定位仓库、优先用 `.venv/bin/python`、
+  以 `runs/latest.json` 判读结果，并新增本地 SQLite 查询指引（§4）。
+- README 与 `docs/安装与使用指南.md` §12：新增"通过 GitHub 安装为 Claude Code 技能"教程，
+  三种方式（clone 到 `~/.claude/skills/`、`curl` 一键复用 bootstrap 并以 `COAL_HOME` 指定
+  安装位置、开发者软链），含验证触发、更新（`git pull`）与卸载（注意备份 `db/`）说明。
+
+### 验证
+
+- 有/无技能对照评测（3 个真实用例）：with-skill 断言通过率 100%（10/10），无技能基线 22.2%，
+  且技能路径平均快 126 秒；报告数字逐项与库中核验一致。
+- 远程 raw bootstrap 与本地脚本 diff 一致；`COAL_HOME` 环境变量传递经 dry-run 验证
+  （目标已存在时自动走 `git pull`，幂等）。离线冒烟 83 passed。
+
 ## [0.3.0.0] - 2026-07-05
 
 OpenClaw 一键安装：智能体一条命令即可自助安装本技能。
