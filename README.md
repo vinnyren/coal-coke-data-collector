@@ -2,6 +2,14 @@
 
 采集**焦煤、焦炭、动力煤**三个品种的**期货与现货**数据，存入本地 **SQLite** 数据库，支持**历史回补**与**每日增量**两种运行模式。以 Claude Code 技能（SKILL.md + Python 脚本）形态交付。
 
+## OpenClaw 一键安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/main/scripts/openclaw-bootstrap.sh | bash
+```
+
+clone 公开仓 → 建 venv → 装依赖 → 离线冒烟验证 → 打印运行命令。详见 [docs/OpenClaw一键安装.md](docs/OpenClaw一键安装.md)。
+
 ## 数据范围
 
 | 品种 | 期货代码 | 交易所 |

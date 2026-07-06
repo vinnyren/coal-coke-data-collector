@@ -2,6 +2,24 @@
 
 本项目变更日志，格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号采用四段式 `MAJOR.MINOR.PATCH.MICRO`。
 
+## [0.3.0.0] - 2026-07-05
+
+OpenClaw 一键安装：智能体一条命令即可自助安装本技能。
+
+### 新增
+
+- `scripts/openclaw-bootstrap.sh`：远程入口（`curl|bash`），clone/pull 公开仓到
+  `~/.openclaw-skills/coal-coke-data-collector`（`COAL_HOME` 可覆盖，`COAL_REPO_URL` 可覆盖源）后调 install.sh。
+- `scripts/install.sh`：仓内幂等安装器——选 Python≥3.9 → 建 `.venv`（失败回退
+  `pip install --user`）→ 装依赖 → 离线 `pytest` 冒烟验证 → 打印运行命令与退出码契约。
+- `docs/OpenClaw一键安装.md`：一键安装说明；README/安装指南加一键安装块；
+  `scripts/openclaw-task.example.md` 改为幂等自愈式（未装先装再跑）。
+
+### 测试
+
+- 新增 7 个脚本测试（pytest + subprocess，用 dry-run 接缝与伪造 python3 断言版本门、
+  clone/pull 决策、URL 覆盖），全量 83 passed。端到端手动冒烟：真装 + 幂等复跑均 exit 0。
+
 ## [0.2.1.0] - 2026-07-03
 
 文档与注释完善（代码零改动）。
