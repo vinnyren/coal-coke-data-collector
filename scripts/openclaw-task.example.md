@@ -35,10 +35,11 @@ curl -fsSL https://raw.githubusercontent.com/vinnyren/coal-coke-data-collector/m
 
 ## 防止重叠运行（建议）
 
-慢跑与下一次触发重叠会导致 SQLite `database is locked`（被误报为 exit 3）。用 `flock` 串行化：
+慢跑与下一次触发重叠会导致 SQLite `database is locked`（被误报为 exit 3）。用 `flock` 串行化（`REPO` 为一键安装目录，默认 `~/.openclaw-skills/coal-coke-data-collector`）：
 
 ```bash
-flock -n /tmp/coal-collect.lock python run.py --mode daily --kind all || echo "上一轮仍在跑，跳过"
+REPO=~/.openclaw-skills/coal-coke-data-collector
+flock -n /tmp/coal-collect.lock "$REPO/.venv/bin/python" "$REPO/run.py" --mode daily --kind all || echo "上一轮仍在跑，跳过"
 ```
 
 ## 报告目录保留（建议）
