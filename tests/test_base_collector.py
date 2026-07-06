@@ -1,5 +1,6 @@
 import pytest
-from collectors.base import BaseCollector, with_retry
+import config
+from collectors.base import BaseCollector, with_retry, UpstreamBlocked
 
 
 def test_with_retry_succeeds_after_failures(monkeypatch):
@@ -51,3 +52,16 @@ def test_run_error_status_on_exception():
     r = Boom(store=None).run()
     assert r["status"] == "error" and r["rows"] == 0
     assert "explode" in r["error"]
+
+
+def test_run_skipped_status_on_upstream_blocked():
+    # 已知外部限制（反爬 WAF 需浏览器）应标 skipped，而非 error（不触发 exit 3）
+    class Blocked(BaseCollector):
+        name = "blocked"
+        def fetch(self, **kwargs):
+            raise UpstreamBlocked("受瑞数 WAF 保护，需浏览器渲染")
+    r = Blocked(store=None).run()
+    assert r["status"] == config.STATUS_SKIPPED
+    assert r["status"] != config.STATUS_ERROR
+    assert r["rows"] == 0
+    assert "浏览器" in r["error"]

@@ -8,6 +8,14 @@ import logging
 import config
 
 
+class UpstreamBlocked(Exception):
+    """上游对本请求施加了已知的访问限制（如反爬 WAF 需浏览器渲染），非本项目代码缺陷。
+
+    run() 据此把状态标为 skipped 而非 error：这类失败与采集器 bug 语义不同，
+    不应触发 exit 3 造成无人值守告警疲劳。异常消息应说明限制来源与可行的启用方式。
+    """
+
+
 def get_logger(name):
     """返回带文件与流双处理器的 logger（日志写入 config.LOG_DIR/collector.log）。"""
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -57,6 +65,12 @@ class BaseCollector:
             status = config.STATUS_OK if rows > 0 else config.STATUS_EMPTY
             error = None
             self.log.info("%s 写入 %s 行", self.name, rows)
+        except UpstreamBlocked as e:
+            # 已知外部限制：标 skipped（非 error），error 字段留原因摘要供人工判读
+            rows = 0
+            status = config.STATUS_SKIPPED
+            error = f"{type(e).__name__}: {str(e)[:config.MAX_ERROR_LEN]}"
+            self.log.warning("%s 跳过（上游限制）: %s", self.name, e)
         except Exception as e:  # noqa: BLE001
             rows = 0
             status = config.STATUS_ERROR

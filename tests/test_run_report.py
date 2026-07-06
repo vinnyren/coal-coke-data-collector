@@ -22,12 +22,30 @@ def test_exit_code_two_when_no_collectors():
     assert report.compute_exit_code([]) == 2
 
 
+def test_exit_code_zero_when_skipped_present():
+    # skipped（外部限制，非代码错误）不得触发 exit 3
+    rs = [_rr("a", "ok", 3), _rr("b", "skipped", 0)]
+    assert report.compute_exit_code(rs) == 0
+
+
+def test_build_report_counts_skipped_in_totals():
+    rs = [_rr("a", "ok", 3), _rr("b", "empty", 0),
+          _rr("c", "skipped", 0), _rr("d", "error", 0)]
+    rep = report.build_report(rs, "daily", "all",
+                              "2026-06-29T00:00:00+00:00",
+                              "2026-06-29T00:00:05+00:00")
+    assert rep["totals"] == {"rows": 3, "ok": 1, "empty": 1,
+                             "skipped": 1, "error": 1}
+    assert rep["exit_code"] == 3        # 仍有 error → 3；skipped 不影响
+
+
 def test_build_report_totals_and_exit():
     rs = [_rr("a", "ok", 3), _rr("b", "empty", 0), _rr("c", "error", 0)]
     rep = report.build_report(rs, "daily", "all",
                               "2026-06-29T00:00:00+00:00",
                               "2026-06-29T00:00:05+00:00")
-    assert rep["totals"] == {"rows": 3, "ok": 1, "empty": 1, "error": 1}
+    assert rep["totals"] == {"rows": 3, "ok": 1, "empty": 1,
+                             "skipped": 0, "error": 1}
     assert rep["exit_code"] == 3
     assert rep["mode"] == "daily" and rep["kind"] == "all"
     assert rep["duration_ms"] == 5000

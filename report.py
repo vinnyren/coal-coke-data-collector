@@ -44,6 +44,7 @@ def build_report(results, mode, kind, started_at, finished_at):
         "rows": sum(int(r.get("rows") or 0) for r in results),
         "ok": sum(1 for r in results if r.get("status") == config.STATUS_OK),
         "empty": sum(1 for r in results if r.get("status") == config.STATUS_EMPTY),
+        "skipped": sum(1 for r in results if r.get("status") == config.STATUS_SKIPPED),
         "error": sum(1 for r in results if r.get("status") == config.STATUS_ERROR),
     }
     return {
