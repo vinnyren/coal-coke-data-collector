@@ -76,5 +76,6 @@ python run.py --mode daily --kind all      # 默认 --format json
 
 - **[安装与使用指南](docs/安装与使用指南.md)** — 安装、参数、定时、报告、排错的完整说明。
 - [SKILL.md](SKILL.md) — 技能清单与无人值守约定。
-- [CHANGELOG.md](CHANGELOG.md) — 版本变更日志（当前 0.2.0.0）。
+- [发布流程](docs/发布流程.md) — 版本判级、CHANGELOG、提交与 `scripts/release.sh` 发版。
+- [CHANGELOG.md](CHANGELOG.md) — 版本变更日志。
 - [设计文档](docs/superpowers/specs/2026-06-28-coal-coke-data-collector-design.md) — 架构设计。

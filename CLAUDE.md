@@ -7,6 +7,10 @@
 - 入口：`python run.py --mode backfill|daily --kind all|futures|spot|rank|inventory|regional`。
 - 测试：`python -m pytest`。
 
+## 发布
+
+发布/发版严格按 **`docs/发布流程.md`** 执行：测试全绿 → VERSION 判级（四段式）→ 写 CHANGELOG 条目 → 对齐指南头部版本 → 分块提交（VERSION+CHANGELOG 放最后一个提交）→ push（分叉则 rebase 保线性，禁止 force push）→ `bash scripts/release.sh` 打 tag + GitHub Release（幂等，发布说明取自 CHANGELOG）。本仓惯例为直接提交 `main`（无 feature 分支/PR），gstack `/ship` 的分支前置不适用。
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
